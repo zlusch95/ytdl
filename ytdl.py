@@ -1,4 +1,5 @@
 import yt_dlp
+from ydl_opts import ydl_opts
 from mutagen.easyid3 import EasyID3
 from mutagen.id3 import ID3, APIC
 import re
@@ -9,30 +10,6 @@ import shutil
 import getpass
 import subprocess
 
-
-ydl_opts = {
-    "paths": {},
-    "download_archive": "",
-    "extract_flat": True,
-    "ignoreerrors": True,
-    "outtmpl": {"default": "%(title)s.%(ext)s"},
-    "format": "bestaudio/best",
-    "noplaylist": True,
-    "writethumbnail": True,  # save video image (thumbnail)
-    "restrictfilenames": False,
-    "postprocessors": [
-        {
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",  # change to flac if preferred
-            "preferredquality": "320",
-        },
-        {
-            "key": "FFmpegMetadata",
-            "add_metadata": True,
-        },
-        {"key": "EmbedThumbnail"},  # embed thumbnail
-    ],
-}
 
 # set this user agent to enable metadata extraction
 yt_dlp.utils.std_headers["User-Agent"] = "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)"
