@@ -5,7 +5,6 @@ import re
 import emoji
 import mutagen
 import os
-import shutil
 import getpass
 import subprocess
 
@@ -23,7 +22,7 @@ ydl_opts = {
     "postprocessors": [
         {
             "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",  # change to flac if preferred
+            "preferredcodec": "mp3",  # change to flac if preferred (for soundcloud, ffmpeg not configured for soundcloud yet)
             "preferredquality": "320",
         },
         {
@@ -48,10 +47,10 @@ def handleSong(url, path="/Users/tilschulz/Music/dj/ytdl"):
             download=False,
         )
         if info:  # if it was downloaded already, info object is None
-            downloadSong(ydl, url, info, path)
+            downloadSong(ydl, url, info, path, downloadAll=True)
 
 
-def handlePlaylist(url, path="/Users/tilschulz/Music/dj/ytdl_playlist"):
+def handlePlaylist(url, path="/Users/tilschulz/Music/dj/test"):
     ydl_opts["paths"] = {"home": path}
     ydl_opts["download_archive"] = path + "/" + "history.txt"
     ydl_opts["noplaylist"] = False
@@ -75,7 +74,9 @@ def handlePlaylist(url, path="/Users/tilschulz/Music/dj/ytdl_playlist"):
                 songURL = entry["url"]
                 info = ydl.extract_info(songURL, download=False)
                 print("Download Song {} of {} ...".format(vidCounter, len(entries)))
-                postData = downloadSong(ydl, songURL, info, path)
+                postData = downloadSong(
+                    ydl, songURL, info, path, downloadAll=True
+                )  # Set downloadAll to True if you want to download every video in playlist
                 # print(postData)
                 if not postData[0]:
                     leftovers.append(postData[1])
@@ -84,7 +85,10 @@ def handlePlaylist(url, path="/Users/tilschulz/Music/dj/ytdl_playlist"):
             vidCounter += 1
         if leftovers != []:
             print("Videos not downloaded because they didn't match song pattern: ", leftovers)
-        os.remove(path + "/" + infoPlaylist["title"] + ".jpg")
+        try:
+            os.remove(path + "/" + infoPlaylist["title"] + ".jpg")
+        except FileNotFoundError as e:
+            print("Playlist picture was not founded", e)
         print("Successfully downloaded playlist!")
         return newSongPaths
 
@@ -116,17 +120,17 @@ def downloadSong(ydl, url, info, path, downloadAll=False):
         artistTrack = handleSongMetaData(metaData, info, mp3Path)
         if renameFile:
             mp3Path = rename()
-        return (mp3Path, None)
     else:
-        if not downloadAll:
+        if not downloadAll:  # download only song pattern
             print(emoji.emojize(":cross_mark: Could not identify a song pattern for video '{}'").format(title))
             print("Download just songs, skip video!")
+            return (None, (url, title))
         else:
             print("Download audio of video '{}'".format(title))
             ydl.download([url])
             # yt_dlp sets title as track & uploader as artist per default
             # handleOtherMetaData(mp3Path)
-        return (None, (url, title))
+    return (mp3Path, None)
 
 
 def handleSongMetaData(metaData, info, mp3Path):
@@ -207,7 +211,7 @@ def extractSongMetaData(title):
 
 
 def download(url):
-    if "playlist" in url:
+    if "playlist" or "sets" in url:  # playlist (YouTube), sets (Soundcloud)
         return handlePlaylist(url)
     else:
         handleSong(url)
