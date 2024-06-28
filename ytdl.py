@@ -22,7 +22,7 @@ ydl_opts = {
     "postprocessors": [
         {
             "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",  # change to flac if preferred (for soundcloud, ffmpeg not configured for soundcloud yet)
+            "preferredcodec": "flac",  # change to flac if preferred (ffmpeg not configured for soundcloud yet)
             "preferredquality": "320",
         },
         {
@@ -34,10 +34,12 @@ ydl_opts = {
 }
 
 # set this user agent to enable metadata extraction
-yt_dlp.utils.std_headers["User-Agent"] = "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)"
+yt_dlp.utils.std_headers["User-Agent"] = (
+    "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)"
+)
 
 
-def handleSong(url, path="/Users/tilschulz/Music/dj/ytdl"):
+def handleSong(url, path="/Users/tilschulz/Music/dj/techno6"):
     ydl_opts["paths"] = {"home": path}
     ydl_opts["download_archive"] = path + "/" + "history.txt"
     ydl_opts["extract_flat"] = False
@@ -50,7 +52,7 @@ def handleSong(url, path="/Users/tilschulz/Music/dj/ytdl"):
             downloadSong(ydl, url, info, path, downloadAll=True)
 
 
-def handlePlaylist(url, path="/Users/tilschulz/Music/dj/test"):
+def handlePlaylist(url, path="/Users/tilschulz/Music/dj/techno7"):
     ydl_opts["paths"] = {"home": path}
     ydl_opts["download_archive"] = path + "/" + "history.txt"
     ydl_opts["noplaylist"] = False
@@ -63,8 +65,12 @@ def handlePlaylist(url, path="/Users/tilschulz/Music/dj/test"):
         leftovers = []
         newSongPaths = []
         print("Playlist ID:", infoPlaylist["id"])
-        print("Total playlist videos:", infoPlaylist["playlist_count"])  # amount of all playlist videos
-        print("Videos to be downloaded:", len(entries))  # amount of videos not downloaded yet
+        print(
+            "Total playlist videos:", infoPlaylist["playlist_count"]
+        )  # amount of all playlist videos
+        print(
+            "Videos to be downloaded:", len(entries)
+        )  # amount of videos not downloaded yet
         vidCounter = 1
         for entry in entries:
             if not entry:
@@ -84,12 +90,16 @@ def handlePlaylist(url, path="/Users/tilschulz/Music/dj/test"):
                     newSongPaths.append(postData[0])
             vidCounter += 1
         if leftovers != []:
-            print("Videos not downloaded because they didn't match song pattern: ", leftovers)
+            print(
+                "Videos not downloaded because they didn't match song pattern: ",
+                leftovers,
+            )
         try:
             os.remove(path + "/" + infoPlaylist["title"] + ".jpg")
         except FileNotFoundError as e:
             print("Playlist picture was not founded", e)
         print("Successfully downloaded playlist!")
+
         return newSongPaths
 
 
@@ -100,7 +110,9 @@ def downloadSong(ydl, url, info, path, downloadAll=False):
         return newFilePath
 
     def isSongPattern():
-        if metaData and (duration <= 900):  # Asumption: Track is not longer than 15 min = 900 sec
+        if metaData and (
+            duration <= 900
+        ):  # Asumption: Track is not longer than 15 min = 900 sec
             return True
         elif not metaData and info.get(
             "track", False
@@ -110,19 +122,27 @@ def downloadSong(ydl, url, info, path, downloadAll=False):
 
     title = info["title"]
     renameFile = False
-    if not "-" in title:  # change filename later to be format 'artist - track' instead of just 'track'
+    if (
+        not "-" in title
+    ):  # change filename later to be format 'artist - track' instead of just 'track'
         renameFile = True
     duration = info["duration"]
     metaData = extractSongMetaData(title)  # song pattern recognition
     mp3Path = path + "/" + title + ".mp3"
-    if isSongPattern():  # metadata was extracted and was not provided by url --> set metadata
+    if (
+        isSongPattern()
+    ):  # metadata was extracted and was not provided by url --> set metadata
         ydl.download([url])
         artistTrack = handleSongMetaData(metaData, info, mp3Path)
         if renameFile:
             mp3Path = rename()
     else:
         if not downloadAll:  # download only song pattern
-            print(emoji.emojize(":cross_mark: Could not identify a song pattern for video '{}'").format(title))
+            print(
+                emoji.emojize(
+                    ":cross_mark: Could not identify a song pattern for video '{}'"
+                ).format(title)
+            )
             print("Download just songs, skip video!")
             return (None, (url, title))
         else:
@@ -150,7 +170,9 @@ def handleSongMetaData(metaData, info, mp3Path):
             audio["title"] = metaData[1]
             audio.save()
         except (FileNotFoundError, mutagen.MutagenError) as e:
-            print("Error: yt_dlp extracted different filename. Keep default yt_dlp metadata instead")
+            print(
+                "Error: yt_dlp extracted different filename. Keep default yt_dlp metadata instead"
+            )
 
     def setAlbumAndGenre():
         try:
@@ -159,7 +181,9 @@ def handleSongMetaData(metaData, info, mp3Path):
             audio["genre"] = "Techno"
             audio.save()
         except (FileNotFoundError, mutagen.MutagenError) as e:
-            print("Error: yt_dlp extracted different filename. Keep default yt_dlp metadata instead")
+            print(
+                "Error: yt_dlp extracted different filename. Keep default yt_dlp metadata instead"
+            )
 
     setAlbumAndGenre()
     if noMetaDataProvided():
@@ -211,14 +235,18 @@ def extractSongMetaData(title):
 
 
 def download(url):
-    if "playlist" or "sets" in url:  # playlist (YouTube), sets (Soundcloud)
+    if "playlist" in url or "sets" in url:  # playlist (YouTube), sets (Soundcloud)
         return handlePlaylist(url)
     else:
         handleSong(url)
 
 
 def addToAppleMusic(newSongs):
-    appleMusicPath = "Users/" + getpass.getuser() + "/Music/Media.localized/Automatically Add to Music.localized"
+    appleMusicPath = (
+        "Users/"
+        + getpass.getuser()
+        + "/Music/Media.localized/Automatically Add to Music.localized"
+    )
     print(newSongs)
     for file in newSongs:
         # shutil.copyfile(file, appleMusicPath)
