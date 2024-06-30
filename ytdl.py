@@ -8,7 +8,7 @@ import os
 import getpass
 import subprocess
 
-
+# make a dataclass from this
 ydl_opts = {
     "paths": {},
     "download_archive": "",
